@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Poptávky úklidu</title>
+<style>
+body { font-family: Arial; margin: 20px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #ddd; padding: 8px; }
+th { background:#4a148c; color:white; }
+button { background:#4a148c; color:white; border:0; padding:6px 10px; cursor:pointer; }
+</style>
+</head>
+
+<body>
+
+<h1>Poptávky úklidu</h1>
+
+<table id="tbl">
+<thead>
+<tr>
+<th>Město</th>
+<th>Typ úklidu</th>
+<th>Poznámka</th>
+<th>Kontakt</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7cqrI5SNaChos91qf7cMlht5Rv8jG4PCjlE_fGPIgtlP29D6HT8I5wlHKKk-r_zviY7gu3oPsZa0z/pub?output=csv";
+
+fetch(CSV_URL)
+.then(r => r.text())
+.then(t => {
+  const rows = t.split("\n").slice(1);
+  let html = "";
+  rows.forEach((r,i)=>{
+    if(!r.trim()) return;
+    const c = r.split(",");
+    html += `<tr>
+      <td>${c[1]||""}</td>
+      <td>${c[2]||""}</td>
+      <td>${c[6]||""}</td>
+      <td><button onclick="unlock(${i})">🔓 Odemknout (99 Kč)</button></td>
+    </tr>`;
+  });
+  document.querySelector("tbody").innerHTML = html;
+});
+
+function unlock(id){
+  const email = prompt("Zadejte e-mail:");
+  if(!email) return;
+
+  fetch("api/request.php",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ email, offer:id })
+  });
+
+  alert("Na e-mail byly odeslány pokyny k platbě.");
+}
+</script>
+
+</body>
+</html>
