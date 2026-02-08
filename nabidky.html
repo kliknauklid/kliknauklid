@@ -26,8 +26,8 @@ Kontakty jsou skryté 🔒 (budou viditelné až po registraci nebo zaplacení)
   <thead>
     <tr>
       <th>Město / lokalita</th>
-      <th>Typ úklidu</th>
       <th>Dojezd (km)</th>
+      <th>Typ úklidu</th>
       <th>Dostupnost</th>
       <th>Frekvence</th>
       <th>Cena</th>
@@ -81,10 +81,10 @@ fetch(sheetUrl)
       html += `
         <tr>
           <td>${cols[4] || ""}</td>
-          <td>${cols[7] || ""}</td>
+          <td>${cols[5] || ""}</td>
           <td>${cols[6] || ""}</td>
+          <td>${cols[7] || ""}</td>
           <td>${cols[8] || ""}</td>
-          <td>${cols[11] || ""}</td>
           <td>${cols[10] || ""}</td>
           <td>${cols[12] || ""}</td>
           <td class="lock">🔒 Kontakt po registraci</td>
