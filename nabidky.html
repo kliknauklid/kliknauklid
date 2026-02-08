@@ -25,6 +25,7 @@ Kontakty jsou skryté 🔒 (budou viditelné až po registraci)
 <table id="nabidkyTable">
   <thead>
     <tr>
+      <th>Vložení</th>
       <th>Město / lokalita</th>
       <th>Dojezd (km)</th>
       <th>Typ úklidu</th>
@@ -80,6 +81,7 @@ fetch(sheetUrl)
 
       html += `
         <tr>
+          <td>${cols[1] || ""}</td>
           <td>${cols[4] || ""}</td>
           <td>${cols[5] || ""}</td>
           <td>${cols[6] || ""}</td>
