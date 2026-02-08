@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Nabídky úklidu | Klik na úklid</title>
+
 <style>
 body { font-family: Arial, sans-serif; margin: 20px; }
 h1 { text-align: center; }
@@ -17,7 +18,9 @@ tr:nth-child(even) { background: #f9f9f9; }
 <body>
 
 <h1>Nabídky úklidu</h1>
-<p style="text-align:center;">Kontakty jsou skryté 🔒 (budou viditelné až po registraci nebo zaplacení)</p>
+<p style="text-align:center;">
+Kontakty jsou skryté 🔒 (budou viditelné až po registraci nebo zaplacení)
+</p>
 
 <table id="nabidkyTable">
   <thead>
@@ -32,49 +35,67 @@ tr:nth-child(even) { background: #f9f9f9; }
       <th>Kontakt</th>
     </tr>
   </thead>
-  <tbody>
-  </tbody>
+  <tbody></tbody>
 </table>
 
 <script>
 const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
 
+// jednoduchý CSV parser (řeší i čárky v uvozovkách)
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let insideQuotes = false;
+
+  for (let char of text) {
+    if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === "," && !insideQuotes) {
+      row.push(cell);
+      cell = "";
+    } else if (char === "\n" && !insideQuotes) {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  if (cell) row.push(cell);
+  if (row.length) rows.push(row);
+  return rows;
+}
+
 fetch(sheetUrl)
   .then(res => res.text())
   .then(csv => {
-    const lines = csv.split("\\n");
-    const rows = lines.slice(1); // vynechá hlavičku
+    const data = parseCSV(csv);
+    const rows = data.slice(1); // bez hlavičky
     let html = "";
 
-    rows.forEach(row => {
-      if (!row.trim()) return; // přeskočí prázdné řádky
-      const cols = row.split(",");
+    rows.forEach(cols => {
+      if (!cols.length) return;
 
-      // přepis sloupců podle pořadí ve Sheets
-      const mesto = cols[3] || "";
-      const typ = cols[4] || "";
-      const dojezd = cols[5] || "";
-      const dostupnost = cols[6] || "";
-      const frekvence = cols[7] || "";
-      const cena = cols[8] || "";
-      const poznamka = cols[9] || "";
-
-      html += "<tr>";
-      html += "<td>" + mesto + "</td>";
-      html += "<td>" + typ + "</td>";
-      html += "<td>" + dojezd + "</td>";
-      html += "<td>" + dostupnost + "</td>";
-      html += "<td>" + frekvence + "</td>";
-      html += "<td>" + cena + "</td>";
-      html += "<td>" + poznamka + "</td>";
-      html += "<td class='lock'>🔒 Kontakt po registraci</td>";
-      html += "</tr>";
+      html += `
+        <tr>
+          <td>${cols[3] || ""}</td>
+          <td>${cols[4] || ""}</td>
+          <td>${cols[5] || ""}</td>
+          <td>${cols[6] || ""}</td>
+          <td>${cols[7] || ""}</td>
+          <td>${cols[8] || ""}</td>
+          <td>${cols[9] || ""}</td>
+          <td class="lock">🔒 Kontakt po registraci</td>
+        </tr>
+      `;
     });
 
     document.querySelector("#nabidkyTable tbody").innerHTML = html;
   })
-  .catch(error => {
-    console.error("Chyba načtení dat:", error);
+  .catch(err => {
+    console.error(err);
     document.body.innerHTML += "<p style='color:red;'>Nepodařilo se načíst nabídky.</p>";
   });
 </script>
