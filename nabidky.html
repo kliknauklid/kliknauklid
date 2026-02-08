@@ -12,6 +12,16 @@ th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
 th { background-color: #4a148c; color: white; }
 tr:nth-child(even) { background: #f9f9f9; }
 .lock { color: #888; font-style: italic; }
+
+button {
+  background:#4a148c;
+  color:#fff;
+  border:0;
+  padding:6px 10px;
+  cursor:pointer;
+  border-radius:4px;
+}
+button:hover { background:#6a1b9a; }
 </style>
 </head>
 
@@ -19,7 +29,7 @@ tr:nth-child(even) { background: #f9f9f9; }
 
 <h1>Nabídky úklidu</h1>
 <p style="text-align:center;">
-Kontakty jsou skryté 🔒 (budou viditelné až po registraci)
+Kontakty jsou skryté 🔒 (po zaplacení se odemknou)
 </p>
 
 <table id="nabidkyTable">
@@ -42,27 +52,19 @@ Kontakty jsou skryté 🔒 (budou viditelné až po registraci)
 <script>
 const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
 
-// jednoduchý CSV parser (řeší i čárky v uvozovkách)
+// CSV parser
 function parseCSV(text) {
   const rows = [];
-  let row = [];
-  let cell = "";
-  let insideQuotes = false;
+  let row = [], cell = "", q = false;
 
   for (let char of text) {
-    if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "," && !insideQuotes) {
-      row.push(cell);
-      cell = "";
-    } else if (char === "\n" && !insideQuotes) {
-      row.push(cell);
-      rows.push(row);
-      row = [];
-      cell = "";
-    } else {
-      cell += char;
-    }
+    if (char === '"') q = !q;
+    else if (char === "," && !q) {
+      row.push(cell); cell = "";
+    } else if (char === "\n" && !q) {
+      row.push(cell); rows.push(row);
+      row = []; cell = "";
+    } else cell += char;
   }
   if (cell) row.push(cell);
   if (row.length) rows.push(row);
@@ -73,10 +75,10 @@ fetch(sheetUrl)
   .then(res => res.text())
   .then(csv => {
     const data = parseCSV(csv);
-    const rows = data.slice(1); // bez hlavičky
+    const rows = data.slice(1);
     let html = "";
 
-    rows.forEach(cols => {
+    rows.forEach((cols, i) => {
       if (!cols.length) return;
 
       html += `
@@ -89,17 +91,34 @@ fetch(sheetUrl)
           <td>${cols[8] || ""}</td>
           <td>${cols[9] || ""}</td>
           <td>${cols[10] || ""}</td>
-          <td class="lock">🔒 Kontakt po registraci</td>
+          <td>
+            <button onclick="unlockOffer(${i})">
+              🔓 Odemknout kontakt (99 Kč)
+            </button>
+          </td>
         </tr>
       `;
     });
 
     document.querySelector("#nabidkyTable tbody").innerHTML = html;
-  })
-  .catch(err => {
-    console.error(err);
-    document.body.innerHTML += "<p style='color:red;'>Nepodařilo se načíst nabídky.</p>";
   });
+
+function unlockOffer(id) {
+  const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
+  if (!email) return;
+
+  fetch("api/request.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: email,
+      offer: id,
+      type: "nabidka"
+    })
+  });
+
+  alert("Pokyny k platbě byly odeslány na e-mail.");
+}
 </script>
 
 </body>
