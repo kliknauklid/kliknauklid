@@ -107,7 +107,7 @@ function unlockOffer(id) {
   const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
   if (!email) return;
 
-  fetch("https://script.google.com/macros/s/AKfycbw13Lhey3XUJ13geC1FNGdPskide9TgEWQnfHpIN0eEBDZqjbuGzC0D4I9PR8xMe0xS/exec", {
+  fetch("https://script.google.com/macros/s/AKfycbzCR2Ez5kYyyOaowgOVnb7mcE3_KRsi8TTaLU5QB5UOyDpyESv84ph7T9s-Yjk591AY/exec", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
