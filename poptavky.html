@@ -2,25 +2,32 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>Poptávky úklidu</title>
+<title>Poptávky úklidu | Klik na úklid</title>
+
 <style>
-body { font-family: Arial; margin: 20px; }
-table { width: 100%; border-collapse: collapse; }
+body { font-family: Arial, sans-serif; margin: 20px; }
+h1 { text-align: center; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
 th, td { border: 1px solid #ddd; padding: 8px; }
-th { background:#4a148c; color:white; }
-button { background:#4a148c; color:white; border:0; padding:6px 10px; cursor:pointer; }
+th { background-color: #4a148c; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+button { background:#4a148c; color:#fff; border:0; padding:6px 10px; cursor:pointer; }
+button:hover { background:#6a1b9a; }
 </style>
 </head>
 
 <body>
 
 <h1>Poptávky úklidu</h1>
+<p style="text-align:center;">Kontakty jsou skryté 🔒 (po zaplacení se odemknou)</p>
 
-<table id="tbl">
+<table id="poptavkyTable">
 <thead>
 <tr>
 <th>Město</th>
 <th>Typ úklidu</th>
+<th>Frekvence</th>
+<th>Dostupnost</th>
 <th>Poznámka</th>
 <th>Kontakt</th>
 </tr>
@@ -29,34 +36,57 @@ button { background:#4a148c; color:white; border:0; padding:6px 10px; cursor:poi
 </table>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7cqrI5SNaChos91qf7cMlht5Rv8jG4PCjlE_fGPIgtlP29D6HT8I5wlHKKk-r_zviY7gu3oPsZa0z/pub?output=csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8lnbTzm5n8aSNQ2vi7JmCBzfaxsuirnIvqtHPLnsOivE_wSwCDUWzMGICPAc3uVr7Wfe884fPvivM/pub?output=csv";
+
+// jednoduchý CSV parser
+function parseCSV(text){
+  const rows = [];
+  let row = [], cell = "", q = false;
+  for (let i=0;i<text.length;i++){
+    const c = text[i];
+    if (c === '"' ) q = !q;
+    else if (c === ',' && !q){ row.push(cell); cell=""; }
+    else if ((c === "\n" || c === "\r") && !q){
+      if(cell || row.length){ row.push(cell); rows.push(row); }
+      row=[]; cell="";
+    } else cell+=c;
+  }
+  if(cell || row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
 
 fetch(CSV_URL)
 .then(r => r.text())
-.then(t => {
-  const rows = t.split("\n").slice(1);
+.then(csv => {
+  const data = parseCSV(csv);
+  const rows = data.slice(1); // bez hlavičky
   let html = "";
-  rows.forEach((r,i)=>{
-    if(!r.trim()) return;
-    const c = r.split(",");
-    html += `<tr>
-      <td>${c[1]||""}</td>
-      <td>${c[2]||""}</td>
-      <td>${c[6]||""}</td>
+
+  rows.forEach((c,i) => {
+    if(!c.length) return;
+
+    html += `
+    <tr>
+      <td>${c[1] || ""}</td>
+      <td>${c[2] || ""}</td>
+      <td>${c[3] || ""}</td>
+      <td>${c[4] || ""}</td>
+      <td>${c[5] || ""}</td>
       <td><button onclick="unlock(${i})">🔓 Odemknout (99 Kč)</button></td>
     </tr>`;
   });
-  document.querySelector("tbody").innerHTML = html;
+
+  document.querySelector("#poptavkyTable tbody").innerHTML = html;
 });
 
 function unlock(id){
-  const email = prompt("Zadejte e-mail:");
+  const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
   if(!email) return;
 
   fetch("api/request.php",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ email, offer:id })
+    body:JSON.stringify({ email:email, offer:id })
   });
 
   alert("Na e-mail byly odeslány pokyny k platbě.");
