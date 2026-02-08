@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Nabídky uklízeček – Klik na úklid</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h1 { text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  th { background: #333; color: #fff; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  tr:hover { background: #f1f1f1; }
+</style>
+</head>
+<body>
+
+<h1>Nabídky uklízeček</h1>
+
+<table id="nabidkyTable">
+  <thead>
+    <tr>
+      <th>Jméno</th>
+      <th>Telefon</th>
+      <th>Email</th>
+      <th>Město</th>
+      <th>Typ úklidu</th>
+      <th>Dojezd</th>
+      <th>Dostupnost</th>
+      <th>Cena</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- data se vloží sem -->
+  </tbody>
+</table>
+
+<script>
+const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTppWCz9bX9UbhtaJjoJzCVBrZPwCDgfvVbpi71sGEWjZ-PC9isdwz3_HssADFrs1p5Z92FocfJOiBN/pub?output=csv";
+
+fetch(sheetUrl)
+  .then(res => res.text())
+  .then(csv => {
+    const rows = csv.split("\\n").slice(1); // přeskočí hlavičku
+    let html = "";
+    rows.forEach(row => {
+      if (!row.trim()) return; // přeskočit prázdné
+      const cols = row.split(",");
+      html += "<tr>";
+      html += "<td>" + (cols[0] || "") + "</td>"; // Jméno
+      html += "<td>" + (cols[1] || "") + "</td>"; // Telefon
+      html += "<td>" + (cols[2] || "") + "</td>"; // Email
+      html += "<td>" + (cols[3] || "") + "</td>"; // Město
+      html += "<td>" + (cols[4] || "") + "</td>"; // Typ úklidu
+      html += "<td>" + (cols[5] || "") + "</td>"; // Dojezd
+      html += "<td>" + (cols[6] || "") + "</td>"; // Dostupnost
+      html += "<td>" + (cols[7] || "") + "</td>"; // Cena
+      html += "</tr>";
+    });
+    document.querySelector("#nabidkyTable tbody").innerHTML = html;
+  })
+  .catch(err => {
+    document.querySelector("body").innerHTML += "<p style='color:red;'>Chyba při načítání dat.</p>";
+    console.error(err);
+  });
+</script>
+
+</body>
+</html>
