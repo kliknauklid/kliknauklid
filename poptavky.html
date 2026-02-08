@@ -24,12 +24,15 @@ button:hover { background:#6a1b9a; }
 <table id="poptavkyTable">
 <thead>
 <tr>
+<th>Vložení</th>
 <th>Město</th>
 <th>Typ úklidu</th>
+<th>Velikost prostoru</th>
+<th>Požadovaný termín</th>
+<th>Požadovaný čas</th>
 <th>Frekvence</th>
-<th>Dostupnost</th>
+<th>Úklidové prostředky</th>
 <th>Poznámka</th>
-<th>Kontakt</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -67,11 +70,14 @@ fetch(CSV_URL)
 
     html += `
     <tr>
-      <td>${c[1] || ""}</td>
-      <td>${c[2] || ""}</td>
-      <td>${c[3] || ""}</td>
-      <td>${c[4] || ""}</td>
+      <td>${c[0] || ""}</td>
       <td>${c[5] || ""}</td>
+      <td>${c[6] || ""}</td>
+      <td>${c[7] || ""}</td>
+      <td>${c[8] || ""}</td>
+      <td>${c[9] || ""}</td>
+      <td>${c[10] || ""}</td>
+      <td>${c[11] || ""}</td>
       <td><button onclick="unlock(${i})">🔓 Odemknout (99 Kč)</button></td>
     </tr>`;
   });
