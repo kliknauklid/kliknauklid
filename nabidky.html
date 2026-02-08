@@ -2,116 +2,81 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>Nabídky úklidu | Klik na úklid</title>
-
+<title>Nabídky uklízeček | Klik na úklid</title>
 <style>
-body{
-    font-family: Arial, sans-serif;
-    background:#f5f5f5;
-    margin:0;
-    padding:20px;
-}
-
-h1{
-    text-align:center;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-}
-
-th, td{
-    border:1px solid #ddd;
-    padding:10px;
-    text-align:left;
-}
-
-th{
-    background:#7b2cbf;
-    color:white;
-}
-
-tr:nth-child(even){
-    background:#f2f2f2;
-}
-
-.lock{
-    color:#999;
-    font-style:italic;
-}
+body { font-family: Arial, sans-serif; margin: 20px; }
+h1 { text-align: center; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #4a148c; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+.lock { color: #888; font-style: italic; }
 </style>
 </head>
 
 <body>
 
-<h1>Nabídky úklidu</h1>
-<p style="text-align:center;">Kontakty jsou dostupné pouze pro registrované ubytovatele 🔒</p>
+<h1>Nabídky uklízeček</h1>
+<p style="text-align:center;">Kontakty jsou skryté 🔒 (budou viditelné až po registraci nebo zaplacení)</p>
 
-<table id="data">
-<thead>
-<tr>
-<th>Lokalita</th>
-<th>Zkušenosti</th>
-<th>Dostupnost</th>
-<th>Typ úklidu</th>
-<th>Frekvence</th>
-<th>Vlastní vybavení</th>
-<th>Doprava</th>
-<th>Poznámka</th>
-<th>Kontakt</th>
-</tr>
-</thead>
-<tbody>
-</tbody>
+<table id="nabidkyTable">
+  <thead>
+    <tr>
+      <th>Město / lokalita</th>
+      <th>Typ úklidu</th>
+      <th>Dojezd (km)</th>
+      <th>Dostupnost</th>
+      <th>Frekvence</th>
+      <th>Cena</th>
+      <th>Další poznámka</th>
+      <th>Kontakt</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
 </table>
 
 <script>
-const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTppWCz9bX9UbhtaJjoJzCVBrZPwCDgfvVbpi71sGEWjZ-PC9isdwz3_HssADFrs1p5Z92FocfJOiBN/pubhtml";
+const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
 
-fetch(sheetURL)
-.then(res => res.text())
-.then(html => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const rows = doc.querySelectorAll("table tr");
+fetch(sheetUrl)
+  .then(res => res.text())
+  .then(csv => {
+    const lines = csv.split("\\n");
+    const rows = lines.slice(1); // vynechá hlavičku
+    let html = "";
 
-    const tbody = document.querySelector("#data tbody");
+    rows.forEach(row => {
+      if (!row.trim()) return; // přeskočí prázdné řádky
+      const cols = row.split(",");
 
-    rows.forEach((row, index) => {
-        if(index === 0) return; // hlavička
+      // přepis sloupců podle pořadí ve Sheets
+      const mesto = cols[3] || "";
+      const typ = cols[4] || "";
+      const dojezd = cols[5] || "";
+      const dostupnost = cols[6] || "";
+      const frekvence = cols[7] || "";
+      const cena = cols[8] || "";
+      const poznamka = cols[9] || "";
 
-        const cells = row.querySelectorAll("td");
-        if(cells.length < 1) return;
-
-        const tr = document.createElement("tr");
-
-        // ⚠️ INDEXY SLOUPCŮ – UPRAVÍME PODLE FORMULÁŘE
-        const lokalita = cells[3]?.innerText || "";
-        const zkusenosti = cells[4]?.innerText || "";
-        const dostupnost = cells[5]?.innerText || "";
-        const typ = cells[6]?.innerText || "";
-        const frekvence = cells[7]?.innerText || "";
-        const vybaveni = cells[8]?.innerText || "";
-        const doprava = cells[9]?.innerText || "";
-        const poznamka = cells[10]?.innerText || "";
-
-        tr.innerHTML = `
-            <td>${lokalita}</td>
-            <td>${zkusenosti}</td>
-            <td>${dostupnost}</td>
-            <td>${typ}</td>
-            <td>${frekvence}</td>
-            <td>${vybaveni}</td>
-            <td>${doprava}</td>
-            <td>${poznamka}</td>
-            <td class="lock">🔒 Kontakt po registraci</td>
-        `;
-
-        tbody.appendChild(tr);
+      html += "<tr>";
+      html += "<td>" + mesto + "</td>";
+      html += "<td>" + typ + "</td>";
+      html += "<td>" + dojezd + "</td>";
+      html += "<td>" + dostupnost + "</td>";
+      html += "<td>" + frekvence + "</td>";
+      html += "<td>" + cena + "</td>";
+      html += "<td>" + poznamka + "</td>";
+      html += "<td class='lock'>🔒 Kontakt po registraci</td>";
+      html += "</tr>";
     });
-});
+
+    document.querySelector("#nabidkyTable tbody").innerHTML = html;
+  })
+  .catch(error => {
+    console.error("Chyba načtení dat:", error);
+    document.body.innerHTML += "<p style='color:red;'>Nepodařilo se načíst nabídky.</p>";
+  });
 </script>
 
 </body>
