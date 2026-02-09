@@ -50,32 +50,41 @@ Kontakty jsou skryté 🔒 (po zaplacení se odemknou)
 </table>
 
 <script>
-const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
+// 👉 CSV z Google Sheets
+const sheetUrl =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
 
-// CSV parser
+// 👉 URL nové webové aplikace (Apps Script)
+const scriptUrl =
+"https://script.google.com/macros/s/AKfycbyNI1TJtMPls-ol2Sy9JC0LXamGNi81s4Qf3Bm--YCl1zYwNeuLiGf3O3uS1ZSA9xqh/exec";
+
+// jednoduchý CSV parser
 function parseCSV(text) {
   const rows = [];
-  let row = [], cell = "", q = false;
+  let row = [], cell = "", inside = false;
 
   for (let char of text) {
-    if (char === '"') q = !q;
-    else if (char === "," && !q) {
+    if (char === '"') inside = !inside;
+    else if (char === "," && !inside) {
       row.push(cell); cell = "";
-    } else if (char === "\n" && !q) {
+    } else if (char === "\n" && !inside) {
       row.push(cell); rows.push(row);
       row = []; cell = "";
-    } else cell += char;
+    } else {
+      cell += char;
+    }
   }
   if (cell) row.push(cell);
   if (row.length) rows.push(row);
   return rows;
 }
 
+// načtení tabulky
 fetch(sheetUrl)
   .then(res => res.text())
   .then(csv => {
     const data = parseCSV(csv);
-    const rows = data.slice(1);
+    const rows = data.slice(1); // bez hlavičky
     let html = "";
 
     rows.forEach((cols, i) => {
@@ -101,13 +110,18 @@ fetch(sheetUrl)
     });
 
     document.querySelector("#nabidkyTable tbody").innerHTML = html;
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Nepodařilo se načíst data z tabulky.");
   });
 
+// odeslání e-mailu přes Apps Script
 function unlockOffer(id) {
   const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
   if (!email) return;
 
-  fetch("https://script.google.com/macros/s/AKfycbydj7EbFDkDl7uhJrDXeilmLLhumVximmfPVheib71y36IXQyhGr7I5aurlUL2fZDPx/exec", {
+  fetch(scriptUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -118,11 +132,15 @@ function unlockOffer(id) {
   })
   .then(res => res.text())
   .then(text => {
-    console.log("Odpověď Apps Scriptu:", text);
-    alert("Požadavek byl odeslán. Zkontrolujte e-mail (i spam).");
+    console.log("Apps Script odpověď:", text);
+    alert("Pokyny k platbě byly odeslány. Zkontrolujte e-mail (i spam).");
   })
   .catch(err => {
-    console.error("Chyba:", err);
-    alert("Chyba při odesílání. Zkuste to prosím znovu.");
+    console.error(err);
+    alert("Chyba při odesílání e-mailu.");
   });
 }
+</script>
+
+</body>
+</html>
