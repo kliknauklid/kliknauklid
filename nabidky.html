@@ -107,51 +107,19 @@ function unlockOffer(id) {
   const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
   if (!email) return;
 
-  const url = "https://script.google.com/macros/s/AKfycbx0sh8gr575WpbdcREz5h7MtHrwV10XFUpsWPluvWGYDD-asd-jD9cBFZVXzNTzMq9c/exec";
-
-  const data = new URLSearchParams();
-  data.append("email", email);
-  data.append("offer", id);
-  data.append("type", "nabidka");
-
-  fetch(url, {
+  fetch("https://script.google.com/macros/s/AKfycbydj7EbFDkDl7uhJrDXeilmLLhumVximmfPVheib71y36IXQyhGr7I5aurlUL2fZDPx/exec", {
     method: "POST",
-    body: data
-  })
-  .then(res => res.text())
-  .then(txt => {
-    alert("Pokyny k platbě byly odeslány na e-mail ✅");
-    console.log("Server:", txt);
-  })
-  .catch(err => {
-    alert("Chyba při odesílání ❌");
-    console.error(err);
-  });
-}
-[12:14, 9. 2. 2026] Kateřina S.: function doPost(e) {
-  const email = e.parameter.email;
-  const offer = e.parameter.offer;
-  const type = e.parameter.type;
-
-  MailApp.sendEmail({
-    to: email,
-    subject: "Platba za odemknutí kontaktu – Klik na úklid",
-    body: `
-Dobrý den,
-
-pro odemknutí kontaktu k nabídce č. ${offer} proveďte platbu:
-
-Částka: 99 Kč
-Účet: XXXXXXXX/XXXX
-VS: ${Date.now()}
-
-Po přijetí platby bude kontakt automaticky zpřístupněn.
-
-Klik na úklid
-`
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: email,
+      offer: id,
+      type: "nabidka"
+    })
   });
 
-  return ContentService
-    .createTextOutput("OK")
-    .setMimeType(ContentService.MimeType.TEXT);
+  alert("Pokyny k platbě byly odeslány na e-mail.");
 }
+</script>
+
+</body>
+</html>
