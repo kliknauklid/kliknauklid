@@ -3,66 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <title>Nabídky úklidu | Klik na úklid</title>
+
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f5f7fb;
-  margin: 0;
-  padding: 30px;
-}
+body { font-family: Arial, sans-serif; margin: 20px; }
+h1 { text-align: center; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #4a148c; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+.lock { color: #888; font-style: italic; }
 
-h1 {
-  text-align: center;
+button {
+  background:#4a148c;
+  color:#fff;
+  border:0;
+  padding:6px 10px;
+  cursor:pointer;
+  border-radius:4px;
 }
-
-.subtitle {
-  text-align: center;
-  color: #666;
-  margin-bottom: 30px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-th, td {
-  padding: 10px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-  text-align: left;
-}
-
-th {
-  background: #243a8f;
-  color: white;
-}
-
-.unlock-btn {
-  background: #243a8f;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.unlock-btn:hover {
-  background: #1a2b6d;
-}
-
-.lock {
-  color: #999;
-  font-style: italic;
-}
+button:hover { background:#6a1b9a; }
 </style>
 </head>
 
 <body>
 
 <h1>Nabídky úklidu</h1>
-<div class="subtitle">Kontakty jsou skryté 🔒 (po zaplacení se odemknou)</div>
+<p style="text-align:center;">
+Kontakty jsou skryté 🔒 (po zaplacení se odemknou)
+</p>
 
 <table id="nabidkyTable">
   <thead>
@@ -78,55 +46,63 @@ th {
       <th>Kontakt</th>
     </tr>
   </thead>
-  <tbody>
-    <!-- data se načtou dynamicky -->
-  </tbody>
+  <tbody></tbody>
 </table>
 
 <script>
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
+const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
 
-/* NAČTENÍ TABULKY */
-fetch(SHEET_URL)
+// CSV parser
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cell = "", q = false;
+
+  for (let char of text) {
+    if (char === '"') q = !q;
+    else if (char === "," && !q) {
+      row.push(cell); cell = "";
+    } else if (char === "\n" && !q) {
+      row.push(cell); rows.push(row);
+      row = []; cell = "";
+    } else cell += char;
+  }
+  if (cell) row.push(cell);
+  if (row.length) rows.push(row);
+  return rows;
+}
+
+fetch(sheetUrl)
   .then(res => res.text())
-  .then(html => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const rows = doc.querySelectorAll("table tr");
+  .then(csv => {
+    const data = parseCSV(csv);
+    const rows = data.slice(1);
+    let html = "";
 
-    let htmlRows = "";
-    let id = 1;
+    rows.forEach((cols, i) => {
+      if (!cols.length) return;
 
-    rows.forEach((row, index) => {
-      if(index === 0) return; // přeskočí hlavičku
-
-      const cols = row.querySelectorAll("td");
-      if(cols.length < 8) return;
-
-      htmlRows += `
+      html += `
         <tr>
-          <td>${cols[0].innerText}</td>
-          <td>${cols[4].innerText}</td>
-          <td>${cols[5].innerText}</td>
-          <td>${cols[6].innerText}</td>
-          <td>${cols[7].innerText}</td>
-          <td>${cols[8].innerText}</td>
-          <td>${cols[9].innerText}</td>
-          <td>${cols[10].innerText}</td>
+          <td>${cols[0] || ""}</td>
+          <td>${cols[4] || ""}</td>
+          <td>${cols[5] || ""}</td>
+          <td>${cols[6] || ""}</td>
+          <td>${cols[7] || ""}</td>
+          <td>${cols[8] || ""}</td>
+          <td>${cols[9] || ""}</td>
+          <td>${cols[10] || ""}</td>
           <td>
-            <button class="unlock-btn" onclick="unlockOffer(${id})">
+            <button onclick="unlockOffer(${i})">
               🔓 Odemknout kontakt (99 Kč)
             </button>
           </td>
         </tr>
       `;
-      id++;
     });
 
-    document.querySelector("#nabidkyTable tbody").innerHTML = htmlRows;
+    document.querySelector("#nabidkyTable tbody").innerHTML = html;
   });
 
-/* ODEMKNUTÍ NABÍDKY */
 function unlockOffer(id) {
   const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
   if (!email) return;
@@ -152,7 +128,30 @@ function unlockOffer(id) {
     console.error(err);
   });
 }
-</script>
+[12:14, 9. 2. 2026] Kateřina S.: function doPost(e) {
+  const email = e.parameter.email;
+  const offer = e.parameter.offer;
+  const type = e.parameter.type;
 
-</body>
-</html>
+  MailApp.sendEmail({
+    to: email,
+    subject: "Platba za odemknutí kontaktu – Klik na úklid",
+    body: `
+Dobrý den,
+
+pro odemknutí kontaktu k nabídce č. ${offer} proveďte platbu:
+
+Částka: 99 Kč
+Účet: XXXXXXXX/XXXX
+VS: ${Date.now()}
+
+Po přijetí platby bude kontakt automaticky zpřístupněn.
+
+Klik na úklid
+`
+  });
+
+  return ContentService
+    .createTextOutput("OK")
+    .setMimeType(ContentService.MimeType.TEXT);
+}
