@@ -115,11 +115,14 @@ function unlockOffer(id) {
       offer: id,
       type: "nabidka"
     })
+  })
+  .then(res => res.text())
+  .then(text => {
+    console.log("Odpověď Apps Scriptu:", text);
+    alert("Požadavek byl odeslán. Zkontrolujte e-mail (i spam).");
+  })
+  .catch(err => {
+    console.error("Chyba:", err);
+    alert("Chyba při odesílání. Zkuste to prosím znovu.");
   });
-
-  alert("Pokyny k platbě byly odeslány na e-mail.");
 }
-</script>
-
-</body>
-</html>
