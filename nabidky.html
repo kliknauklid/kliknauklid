@@ -4,128 +4,85 @@
 <meta charset="UTF-8">
 <title>Nabídky úklidu | Klik na úklid</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f5f5f7;
-  margin: 20px;
-}
-h1 {
-  text-align: center;
-}
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 20px;
-}
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  font-size: 14px;
-}
-th {
-  background: #243a8f;
-  color: white;
-}
-button.unlock-btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-button.unlock-btn:hover {
-  background: #0056b3;
-}
-.lock {
-  color: #888;
-  font-style: italic;
-}
+body{font-family:Arial;background:#f4f6fb;margin:0;padding:30px}
+h1{text-align:center}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{padding:10px;border:1px solid #ddd;font-size:14px}
+th{background:#1f2b6c;color:#fff}
+.btn{background:#1f2b6c;color:#fff;border:none;padding:6px 12px;cursor:pointer;border-radius:4px}
+.lock{opacity:0.4}
 </style>
 </head>
 
 <body>
-<h1>Nabídky úklidu</h1>
-<p style="text-align:center;">Kontakty jsou skryté 🔒 – odemknou se po zaplacení</p>
 
-<table id="offersTable">
-  <thead>
-    <tr>
-      <th>Město / lokalita</th>
-      <th>Dojezd (km)</th>
-      <th>Typ úklidu</th>
-      <th>Dostupnost</th>
-      <th>Cena</th>
-      <th>Zkušenost</th>
-      <th>Poznámka</th>
-      <th>Kontakt</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
+<h1>Nabídky úklidu</h1>
+<p style="text-align:center">Kontakty jsou skryté 🔒 – odemknou se po zaplacení</p>
+
+<table id="nabidkyTable">
+<thead>
+<tr>
+<th>Město / lokalita</th>
+<th>Dojed (km)</th>
+<th>Typ úklidu</th>
+<th>Dostupnost</th>
+<th>Cena</th>
+<th>Zkušenost</th>
+<th>Poznámka</th>
+<th>Kontakt</th>
+</tr>
+</thead>
+<tbody></tbody>
 </table>
 
 <script>
-// === URL tvého Apps Script API (GET i POST) ===
-const API_URL = "https://script.google.com/macros/s/AKfycbwE0EZp1L-DNUa4h47cDPgS9DDbpGwPFfKdrgPoCKcrXRA80g6xNWFeA1liEj6A7UQw-g/exec";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
+const API_URL = "https://script.google.com/macros/s/AKfycbxJs061Eq-DJpWFkqYS5BMdyDG1KdhzfpP7tu8zVHXK7bAJ2GOkcvNqjZvBv355zcpVKw/exec";
 
-// 1) NAČTEME DATA (GET → JSON)
-fetch(API_URL)
-  .then(res => res.json())
-  .then(data => {
-    const tbody = document.querySelector("#offersTable tbody");
-    let html = "";
+fetch(CSV_URL)
+.then(r => r.text())
+.then(text => {
+  const rows = text.split("\n").slice(1);
+  let html = "";
 
-    data.forEach((item, index) => {
-      html += `
-        <tr>
-          <td>${item.mesto || ""}</td>
-          <td>${item.dojezd || ""}</td>
-          <td>${item.typUklidu || ""}</td>
-          <td>${item.dostupnost || ""}</td>
-          <td>${item.cena || ""}</td>
-          <td>${item.zkusenost || ""}</td>
-          <td>${item.poznamka || ""}</td>
-          <td>
-            <button class="unlock-btn" onclick="unlockContact(${index})">
-              🔓 Odemknout kontakt
-            </button>
-          </td>
-        </tr>
-      `;
-    });
+  rows.forEach((row,i)=>{
+    if(!row.trim()) return;
+    const cols = row.split(",");
 
-    tbody.innerHTML = html;
-  })
-  .catch(err => {
-    console.error("Chyba načítání dat:", err);
+    html += `<tr>
+      <td>${cols[0]}</td>
+      <td>${cols[1]}</td>
+      <td>${cols[2]}</td>
+      <td>${cols[3]}</td>
+      <td>${cols[4]}</td>
+      <td>${cols[5]}</td>
+      <td>${cols[6]}</td>
+      <td><button class="btn" onclick="unlock(${i})">Odemknout kontakt</button></td>
+    </tr>`;
   });
 
-// 2) FUNKCE PRO ODEMČENÍ
-function unlockContact(offerId) {
-  const email = prompt("Zadejte e-mail, kam vám mají přijít platební údaje:");
-  if (!email) return;
+  document.querySelector("#nabidkyTable tbody").innerHTML = html;
+});
 
-  // připravíme POST tělo
-  const body = {
-    email: email,
-    type: "nabidka",
-    offerId: offerId
-  };
+function unlock(id){
+  const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
+  if(!email) return;
 
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: {
-      "Content-Type": "application/json"
+  fetch(API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email:email,offer:id})
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.status==="ok"){
+      alert("Platební údaje byly odeslány na e-mail.");
+    }else{
+      alert("Chyba: "+d.message);
     }
   })
-  .then(res => res.json())
-  .then(result => {
-    alert("Pokyny k platbě byly odeslány na e-mail 📩");
-  })
-  .catch(err => {
-    console.error("Chyba při odesílání:", err);
-    alert("Něco se nepovedlo 😕");
+  .catch(()=>{
+    alert("Chyba spojení se serverem");
   });
 }
 </script>
