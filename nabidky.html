@@ -1,132 +1,52 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-<meta charset="UTF-8">
-<title>Nabídky úklidu | Klik na úklid</title>
+const API_URL = "SEM_VLOZ_URL_WEB_APP";
 
-<style>
-body { font-family: Arial, sans-serif; margin: 20px; }
-h1 { text-align: center; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-th { background-color: #4a148c; color: white; }
-tr:nth-child(even) { background: #f9f9f9; }
-.lock { color: #888; font-style: italic; }
+let selectedOfferId = null;
 
-button {
-  background:#4a148c;
-  color:#fff;
-  border:0;
-  padding:6px 10px;
-  cursor:pointer;
-  border-radius:4px;
-}
-button:hover { background:#6a1b9a; }
-</style>
-</head>
-
-<body>
-
-<h1>Nabídky úklidu</h1>
-<p style="text-align:center;">
-Kontakty jsou skryté 🔒 (po zaplacení se odemknou)
-</p>
-
-<table id="nabidkyTable">
-  <thead>
-    <tr>
-      <th>Vložení</th>
-      <th>Město / lokalita</th>
-      <th>Dojezd (km)</th>
-      <th>Typ úklidu</th>
-      <th>Dostupnost</th>
-      <th>Cena</th>
-      <th>Zkušenost</th>
-      <th>Poznámka</th>
-      <th>Kontakt</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<script>
-const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
-
-// CSV parser
-function parseCSV(text) {
-  const rows = [];
-  let row = [], cell = "", q = false;
-
-  for (let char of text) {
-    if (char === '"') q = !q;
-    else if (char === "," && !q) {
-      row.push(cell); cell = "";
-    } else if (char === "\n" && !q) {
-      row.push(cell); rows.push(row);
-      row = []; cell = "";
-    } else cell += char;
-  }
-  if (cell) row.push(cell);
-  if (row.length) rows.push(row);
-  return rows;
-}
-
-fetch(sheetUrl)
-  .then(res => res.text())
-  .then(csv => {
-    const data = parseCSV(csv);
-    const rows = data.slice(1);
-    let html = "";
-
-    rows.forEach((cols, i) => {
-      if (!cols.length) return;
-
-      html += `
-        <tr>
-          <td>${cols[0] || ""}</td>
-          <td>${cols[4] || ""}</td>
-          <td>${cols[5] || ""}</td>
-          <td>${cols[6] || ""}</td>
-          <td>${cols[7] || ""}</td>
-          <td>${cols[8] || ""}</td>
-          <td>${cols[9] || ""}</td>
-          <td>${cols[10] || ""}</td>
-          <td>
-            <button onclick="unlockOffer(${i})">
-              🔓 Odemknout kontakt (99 Kč)
-            </button>
-          </td>
-        </tr>
+// načtení veřejné nabídky
+fetch(API_URL + "?action=getPublicOffers")
+  .then(res => res.json())
+  .then(data => {
+    const tbody = document.getElementById("offers");
+    data.forEach(o => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${o.jmeno}</td>
+        <td>${o.mesto}</td>
+        <td><button onclick="openPopup('${o.id}')">Zobrazit kontakt</button></td>
       `;
+      tbody.appendChild(tr);
     });
-
-    document.querySelector("#nabidkyTable tbody").innerHTML = html;
   });
 
-function unlockOffer(id) {
-  const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
-  if (!email) return;
+// otevření popupu
+function openPopup(offerId) {
+  selectedOfferId = offerId;
+  document.getElementById("popup").style.display = "block";
+}
 
-  fetch("https://script.google.com/macros/s/AKfycbyQnpaFyWj99HP2scsLec3NdmogD2wm5j5t0YygwiEGDwtydByBjOtbBhKt-6rTu9oA5A/exec", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: email,
-      offer: id,
-      type: "nabidka"
-    })
-  })
-  .then(res => res.text())
-  .then(text => {
-    console.log("Odpověď scriptu:", text);
-    alert("Server odpověděl: " + text);
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Chyba při odesílání mailu");
+// zavření popupu
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+}
+
+// odeslání emailu
+function sendEmail() {
+  const email = document.getElementById("email").value;
+
+  if (!email) {
+    alert("Zadejte email");
+    return;
+  }
+
+  fetch(
+    API_URL +
+    "?action=sendPaymentMail" +
+    "&email=" + encodeURIComponent(email) +
+    "&offerId=" + encodeURIComponent(selectedOfferId)
+  )
+  .then(res => res.json())
+  .then(() => {
+    alert("Email s pokyny k platbě byl odeslán.");
+    closePopup();
   });
 }
-</script>
-
-</body>
-</html>
