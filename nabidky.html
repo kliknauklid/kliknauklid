@@ -115,11 +115,14 @@ function unlockOffer(id) {
       offer: id,
       type: "nabidka"
     })
+  })
+  .then(res => res.text())
+  .then(text => {
+    console.log("Odpověď scriptu:", text);
+    alert("Server odpověděl: " + text);
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Chyba při odesílání mailu");
   });
-
-  alert("Pokyny k platbě byly odeslány na e-mail.");
 }
-</script>
-
-</body>
-</html>
