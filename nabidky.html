@@ -2,15 +2,15 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>Nabídky úklidu | Klik na úklid</title>
+<title>Nabídky úklidu</title>
 <style>
-body{font-family:Arial;background:#f4f6fb;margin:0;padding:30px}
+body{font-family:Arial;background:#f4f6fb;margin:0;padding:20px}
 h1{text-align:center}
-table{width:100%;border-collapse:collapse;background:#fff}
-th,td{padding:10px;border:1px solid #ddd;font-size:14px}
-th{background:#1f2b6c;color:#fff}
-.btn{background:#1f2b6c;color:#fff;border:none;padding:6px 12px;cursor:pointer;border-radius:4px}
-.lock{opacity:0.4}
+table{width:100%;border-collapse:collapse;background:white}
+th,td{border:1px solid #ccc;padding:8px;text-align:left}
+th{background:#1f2a6d;color:white}
+.lock{color:red;font-weight:bold}
+.btn{padding:6px 10px;background:#1f2a6d;color:white;border:none;border-radius:5px;cursor:pointer}
 </style>
 </head>
 
@@ -19,11 +19,12 @@ th{background:#1f2b6c;color:#fff}
 <h1>Nabídky úklidu</h1>
 <p style="text-align:center">Kontakty jsou skryté 🔒 – odemknou se po zaplacení</p>
 
-<table id="nabidkyTable">
+<table>
 <thead>
 <tr>
-<th>Město / lokalita</th>
-<th>Dojed (km)</th>
+<th>Vložení</th>
+<th>Město</th>
+<th>Dojezd</th>
 <th>Typ úklidu</th>
 <th>Dostupnost</th>
 <th>Cena</th>
@@ -32,58 +33,49 @@ th{background:#1f2b6c;color:#fff}
 <th>Kontakt</th>
 </tr>
 </thead>
-<tbody></tbody>
+
+<tbody id="data"></tbody>
 </table>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
-const API_URL = "https://script.google.com/macros/s/AKfycbxJs061Eq-DJpWFkqYS5BMdyDG1KdhzfpP7tu8zVHXK7bAJ2GOkcvNqjZvBv355zcpVKw/exec";
+// ===== DATA API =====
+const DATA_API = "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLgUTQlY34l62hKBqMhtIr3UZpRHbgEAjsKYaTFg4V2IP3Mqtpb2PEFhdC0aM-ze_DrgADZ_7vbrJD8dp842NGEGlpvUueQAqVkIcb6bvY4L3BwhjvR-ewplWoVBgCkXRKT3myGvKXs0JwKFeKtNG1oJIUruSgcWjWawpbaaiP7iQuFgByY7Di9cTCGOLK4f9rdWCM_XZkKf62Q9jgTcwp_jfx63J2CPYGYHAFFmmdQtrRv2WOJ98RN6jO-3Xg361iR5_qPfmOdI-tvJ1FPWLVg8u3hVyeihhWPki4dg&lib=M1uTt_cSLFRneBAl08ihj4ATv7YRnEe7N";  
 
-fetch(CSV_URL)
-.then(r => r.text())
-.then(text => {
-  const rows = text.split("\n").slice(1);
-  let html = "";
+// ===== MAIL API =====
+const MAIL_API = "https://script.google.com/macros/s/AKfycbxJs061Eq-DJpWFkqYS5BMdyDG1KdhzfpP7tu8zVHXK7bAJ2GOkcvNqjZvBv355zcpVKw/exec";
 
-  rows.forEach((row,i)=>{
-    if(!row.trim()) return;
-    const cols = row.split(",");
-
-    html += `<tr>
-      <td>${cols[0]}</td>
-      <td>${cols[4]}</td>
-      <td>${cols[5]}</td>
-      <td>${cols[6]}</td>
-      <td>${cols[7]}</td>
-      <td>${cols[8]}</td>
-      <td>${cols[9]}</td>
+fetch(DATA_API)
+.then(r=>r.json())
+.then(data=>{
+  let html="";
+  data.forEach((row,i)=>{
+    html+=`
+    <tr>
+      <td>${row.vlozeni}</td>
+      <td>${row.mesto}</td>
+      <td>${row.dojezd}</td>
+      <td>${row.typUklidu}</td>
+      <td>${row.dostupnost}</td>
+      <td>${row.cena}</td>
+      <td>${row.zkusenost}</td>
+      <td>${row.poznamka}</td>
       <td><button class="btn" onclick="unlock(${i})">Odemknout kontakt</button></td>
     </tr>`;
   });
-
-  document.querySelector("#nabidkyTable tbody").innerHTML = html;
+  document.getElementById("data").innerHTML = html;
 });
 
 function unlock(id){
-  const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
+  const email = prompt("Zadej e-mail pro zaslání platebních údajů:");
   if(!email) return;
 
-  fetch(API_URL,{
+  fetch(MAIL_API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({email:email,offer:id})
-  })
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.status==="ok"){
-      alert("Platební údaje byly odeslány na e-mail.");
-    }else{
-      alert("Chyba: "+d.message);
-    }
-  })
-  .catch(()=>{
-    alert("Chyba spojení se serverem");
   });
+
+  alert("Platební údaje byly odeslány na e-mail.");
 }
 </script>
 
