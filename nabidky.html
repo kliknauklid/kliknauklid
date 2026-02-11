@@ -1,59 +1,37 @@
 <script>
-const SHEET_CSV =
+const CSV_URL =
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
 
-const MAIL_API =
-"https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLjxFcmsKA75oUrT3R5rPm_Rz0tU5GkRKdrSd32UgQmBiZ1MGKzIviRrUQXYl8NOhTSUCCsaNHohF5fn5fvSUBz50bczHaG76JZcr9Z7xbCKJfDGtZ8dNiBwcNuYUdRFeX5zBoRcNqhhMrBLPMUH3cpIihKukbAy6DRs5A7AgEh3qlN8RzffLxM4hmY7GTHrhOqsWRlAohEljR2M-SAxIGrDjzUWk-7FVaRg4rQ09QVHHiaOpiEHzEbGIeq8XtY8Y56f8Sh_XDxafdze_a-6FGPzr5D3azLyy_VVqX3C&lib=M1uTt_cSLFRneBAl08ihj4ATv7YRnEe7N";
+fetch(CSV_URL)
+.then(res => res.text())
+.then(text => {
+  const lines = text.trim().split("\n");
+  const rows = lines.slice(1);
 
-// jednoduchý CSV parser
-function parseCSV(text){
-  const rows=[];
-  let row=[],cell="",q=false;
-  for(let c of text){
-    if(c=='"') q=!q;
-    else if(c==","&&!q){row.push(cell);cell="";}
-    else if(c=="\n"&&!q){row.push(cell);rows.push(row);row=[];cell="";}
-    else cell+=c;
-  }
-  if(cell) row.push(cell);
-  if(row.length) rows.push(row);
-  return rows;
-}
+  let html = "";
 
-fetch(SHEET_CSV)
-.then(r=>r.text())
-.then(csv=>{
-  const data=parseCSV(csv).slice(1);
-  let html="";
+  rows.forEach((line, i) => {
+    const cols = line.split(",");
 
-  data.forEach((cols,i)=>{
-    html+=`
-    <tr>
-      <td>${cols[0] || ""}</td>   <!-- vložení -->
-      <td>${cols[4] || ""}</td>   <!-- město -->
-      <td>${cols[5] || ""}</td>   <!-- dojezd -->
-      <td>${cols[6] || ""}</td>   <!-- typ úklidu -->
-      <td>${cols[7] || ""}</td>   <!-- dostupnost -->
-      <td>${cols[8] || ""}</td>   <!-- cena -->
-      <td>${cols[9] || ""}</td>   <!-- zkušenost -->
-      <td>${cols[10] || ""}</td>  <!-- poznámka -->
-      <td><button class="btn" onclick="unlock(${i})">Odemknout</button></td>
-    </tr>`;
+    html += `
+      <tr>
+        <td>${cols[0] || ""}</td>
+        <td>${cols[4] || ""}</td>
+        <td>${cols[5] || ""}</td>
+        <td>${cols[6] || ""}</td>
+        <td>${cols[7] || ""}</td>
+        <td>${cols[8] || ""}</td>
+        <td>${cols[9] || ""}</td>
+        <td>${cols[10] || ""}</td>
+        <td>🔒</td>
+      </tr>
+    `;
   });
 
   document.getElementById("data").innerHTML = html;
+})
+.catch(err => {
+  console.error(err);
+  alert("Nepodařilo se načíst CSV.");
 });
-
-function unlock(id){
-  const email = prompt("Zadejte e-mail:");
-  if(!email) return;
-
-  fetch(MAIL_API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({email:email,offer:id,type:"nabidka"})
-  })
-  .then(()=>alert("E-mail byl odeslán."))
-  .catch(()=>alert("Chyba při odesílání."));
-}
 </script>
