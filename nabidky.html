@@ -1,37 +1,125 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Nabídky úklidu | Klik na úklid</title>
+
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+h1 { text-align: center; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #4a148c; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+.lock { color: #888; font-style: italic; }
+
+button {
+  background:#4a148c;
+  color:#fff;
+  border:0;
+  padding:6px 10px;
+  cursor:pointer;
+  border-radius:4px;
+}
+button:hover { background:#6a1b9a; }
+</style>
+</head>
+
+<body>
+
+<h1>Nabídky úklidu</h1>
+<p style="text-align:center;">
+Kontakty jsou skryté 🔒 (po zaplacení se odemknou)
+</p>
+
+<table id="nabidkyTable">
+  <thead>
+    <tr>
+      <th>Vložení</th>
+      <th>Město / lokalita</th>
+      <th>Dojezd (km)</th>
+      <th>Typ úklidu</th>
+      <th>Dostupnost</th>
+      <th>Cena</th>
+      <th>Zkušenost</th>
+      <th>Poznámka</th>
+      <th>Kontakt</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
 <script>
-const CSV_URL =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
+const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";
 
-fetch(CSV_URL)
-.then(res => res.text())
-.then(text => {
-  const lines = text.trim().split("\n");
-  const rows = lines.slice(1);
+// CSV parser
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cell = "", q = false;
 
-  let html = "";
+  for (let char of text) {
+    if (char === '"') q = !q;
+    else if (char === "," && !q) {
+      row.push(cell); cell = "";
+    } else if (char === "\n" && !q) {
+      row.push(cell); rows.push(row);
+      row = []; cell = "";
+    } else cell += char;
+  }
+  if (cell) row.push(cell);
+  if (row.length) rows.push(row);
+  return rows;
+}
 
-  rows.forEach((line, i) => {
-    const cols = line.split(",");
+fetch(sheetUrl)
+  .then(res => res.text())
+  .then(csv => {
+    const data = parseCSV(csv);
+    const rows = data.slice(1);
+    let html = "";
 
-    html += `
-      <tr>
-        <td>${cols[0] || ""}</td>
-        <td>${cols[4] || ""}</td>
-        <td>${cols[5] || ""}</td>
-        <td>${cols[6] || ""}</td>
-        <td>${cols[7] || ""}</td>
-        <td>${cols[8] || ""}</td>
-        <td>${cols[9] || ""}</td>
-        <td>${cols[10] || ""}</td>
-        <td>🔒</td>
-      </tr>
-    `;
+    rows.forEach((cols, i) => {
+      if (!cols.length) return;
+
+      html += `
+        <tr>
+          <td>${cols[0] || ""}</td>
+          <td>${cols[4] || ""}</td>
+          <td>${cols[5] || ""}</td>
+          <td>${cols[6] || ""}</td>
+          <td>${cols[7] || ""}</td>
+          <td>${cols[8] || ""}</td>
+          <td>${cols[9] || ""}</td>
+          <td>${cols[10] || ""}</td>
+          <td>
+            <button onclick="unlockOffer(${i})">
+              🔓 Odemknout kontakt (99 Kč)
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    document.querySelector("#nabidkyTable tbody").innerHTML = html;
   });
 
-  document.getElementById("data").innerHTML = html;
-})
-.catch(err => {
-  console.error(err);
-  alert("Nepodařilo se načíst CSV.");
-});
+function unlockOffer(id) {
+  const email = prompt("Zadejte e-mail pro zaslání platebních údajů:");
+  if (!email) return;
+
+  fetch("https://script.google.com/macros/s/AKfycbyv-VrDI3swF6_a04Q8QiiRBpMWRRRGqxdSSTtYHcXMR5zEEtV39s3Z7rD-INh8A-kXew/exec", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: email,
+      offer: id,
+      type: "nabidka"
+    })
+  });
+
+  alert("Pokyny k platbě byly odeslány na e-mail.");
+}
 </script>
+
+</body>
+</html>
