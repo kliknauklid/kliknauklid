@@ -51,16 +51,15 @@ fetch(DATA_API)
   data.forEach((row,i)=>{
     html+=`
     <tr>
-      <td>${row.vlozeni}</td>
-      <td>${row.mesto}</td>
-      <td>${row.dojezd}</td>
-      <td>${row.typUklidu}</td>
-      <td>${row.dostupnost}</td>
-      <td>${row.cena}</td>
-      <td>${row.zkusenost}</td>
-      <td>${row.poznamka}</td>
+      <td>${cols[0]}</td>
+      <td>${cols[4]}</td>
+      <td>${cols[5]}</td>
+      <td>${cols[6]}</td>
+      <td>${cols[7]}</td>
+      <td>${cols[8]}</td>
+      <td>${cols[9]}</td>
       <td><button class="btn" onclick="unlock(${i})">Odemknout kontakt</button></td>
-    </tr>`;
+     </tr>`;
   });
   document.getElementById("data").innerHTML = html;
 });
