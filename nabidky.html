@@ -39,10 +39,10 @@ th{background:#1f2a6d;color:white}
 
 <script>
 // ===== DATA API =====
-const DATA_API = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRc1EKWsR4iHnhk1PSgVAQ5u_YfM481jOzs9mxzXLvIZ0bhtz0TFRAAzw_15LJhvNSpyzb6dMA6IK0r/pub?output=csv";  
+const DATA_API = "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLgUTQlY34l62hKBqMhtIr3UZpRHbgEAjsKYaTFg4V2IP3Mqtpb2PEFhdC0aM-ze_DrgADZ_7vbrJD8dp842NGEGlpvUueQAqVkIcb6bvY4L3BwhjvR-ewplWoVBgCkXRKT3myGvKXs0JwKFeKtNG1oJIUruSgcWjWawpbaaiP7iQuFgByY7Di9cTCGOLK4f9rdWCM_XZkKf62Q9jgTcwp_jfx63J2CPYGYHAFFmmdQtrRv2WOJ98RN6jO-3Xg361iR5_qPfmOdI-tvJ1FPWLVg8u3hVyeihhWPki4dg&lib=M1uTt_cSLFRneBAl08ihj4ATv7YRnEe7N";  
 
 // ===== MAIL API =====
-const MAIL_API = "https://script.google.com/macros/s/AKfycbyv-VrDI3swF6_a04Q8QiiRBpMWRRRGqxdSSTtYHcXMR5zEEtV39s3Z7rD-INh8A-kXew/exec";
+const MAIL_API = "https://script.google.com/macros/s/AKfycbxJs061Eq-DJpWFkqYS5BMdyDG1KdhzfpP7tu8zVHXK7bAJ2GOkcvNqjZvBv355zcpVKw/exec";
 
 fetch(DATA_API)
 .then(r=>r.json())
@@ -51,15 +51,16 @@ fetch(DATA_API)
   data.forEach((row,i)=>{
     html+=`
     <tr>
-      <td>${cols[0]}</td>
-      <td>${cols[4]}</td>
-      <td>${cols[5]}</td>
-      <td>${cols[6]}</td>
-      <td>${cols[7]}</td>
-      <td>${cols[8]}</td>
-      <td>${cols[9]}</td>
+      <td>${row.vlozeni}</td>
+      <td>${row.mesto}</td>
+      <td>${row.dojezd}</td>
+      <td>${row.typUklidu}</td>
+      <td>${row.dostupnost}</td>
+      <td>${row.cena}</td>
+      <td>${row.zkusenost}</td>
+      <td>${row.poznamka}</td>
       <td><button class="btn" onclick="unlock(${i})">Odemknout kontakt</button></td>
-     </tr>`;
+    </tr>`;
   });
   document.getElementById("data").innerHTML = html;
 });
