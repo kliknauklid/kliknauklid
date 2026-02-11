@@ -1,0 +1,48 @@
+const API_URL = "https://script.google.com/macros/s/AKfycbygkTQmUoANTqR5UqDcxpjicl0jL8A0kED51ws1QZHbh9FpIBwWH02pLMzknpT45iVYQQ/exec";
+
+let selectedOfferId = null;
+
+fetch(API_URL + "?action=getPublicOffers")
+  .then(res => res.json())
+  .then(data => {
+    const tbody = document.getElementById("offers");
+    data.forEach(o => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${o.jmeno}</td>
+        <td>${o.mesto}</td>
+        <td><button onclick="openPopup('${o.id}')">Zobrazit kontakt</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+
+function openPopup(offerId) {
+  selectedOfferId = offerId;
+  document.getElementById("popup").style.display = "block";
+}
+
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+}
+
+function sendEmail() {
+  const email = document.getElementById("email").value;
+
+  if (!email) {
+    alert("Zadejte email");
+    return;
+  }
+
+  fetch(
+    API_URL +
+    "?action=sendPaymentMail" +
+    "&email=" + encodeURIComponent(email) +
+    "&offerId=" + encodeURIComponent(selectedOfferId)
+  )
+  .then(res => res.json())
+  .then(() => {
+    alert("Email s pokyny k platbě byl odeslán.");
+    closePopup();
+  });
+}
